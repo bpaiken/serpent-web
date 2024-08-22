@@ -1,10 +1,13 @@
 [project]
 name = "serpent-web"
-version = "0.1.8"
+version = "0.1.10"
 description = "Core, Data, and Utility libraries for api development"
+homepage = "https://github.com/bpaiken/serpent-web"
 authors = [
     {name = "Brian Aiken", email = "bpaiken570@gmail.com"},
 ]
+
+
 dependencies = [
     "cachetools>=5.4.0",
     "python-jose>=3.3.0",
