@@ -1,0 +1,29 @@
+[project]
+name = "serpent-web"
+version = "0.1.8"
+description = "Core, Data, and Utility libraries for api development"
+authors = [
+    {name = "Brian Aiken", email = "bpaiken570@gmail.com"},
+]
+dependencies = [
+    "cachetools>=5.4.0",
+    "python-jose>=3.3.0",
+    "starlette>=0.37.0",
+    "requests>=2.32.3",
+    "jsonpath-ng>=1.6.1",
+    "pydantic>=2.8.2",
+    "xxhash>=3.4.1",
+    "pydantic-settings>=2.4.0",
+    "sqlalchemy>=2.0.32",
+]
+requires-python = ">=3.10, <3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
