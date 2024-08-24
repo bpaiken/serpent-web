@@ -1,20 +1,30 @@
-import uuid
+from abc import ABC, abstractmethod
+from abc import ABCMeta
+from typing import TypeVar, Generic
 
-from datetime import datetime
-from sqlalchemy import Column, DateTime, Uuid, event
-from sqlalchemy.orm import declared_attr, as_declarative
+from sqlalchemy import Column, DateTime, event
+from sqlalchemy.orm import declared_attr, as_declarative, DeclarativeMeta, Mapped
 
 from serpent_web.core.util.datetime_helpers import utc_now_time_aware
 from serpent_web.core.util.string_helpers import snake_to_camel, title_to_snake
 
+TId = TypeVar('TId', bound=object)
 
-@as_declarative()
-class BaseSqlModel:
+
+class BaseMeta(DeclarativeMeta, ABCMeta):
+    pass
+
+
+@as_declarative(metaclass=BaseMeta)
+class BaseSqlModel(Generic[TId], ABC):
     @declared_attr
     def __tablename__(cls):
         return title_to_snake(cls.__name__)
 
-    id = Column(Uuid, primary_key=True, default=uuid.uuid4)
+    @declared_attr
+    def id(cls) -> Mapped[TId]:
+        return Column(cls.id_model_type(), primary_key=True, default=cls.default_id())
+
     created_on = Column(DateTime, default=utc_now_time_aware)
     updated_on = Column(DateTime, default=utc_now_time_aware, onupdate=utc_now_time_aware)
 
@@ -25,6 +35,16 @@ class BaseSqlModel:
     @property
     def timestamp(self):  # alias
         return self.created_on
+
+    @classmethod
+    @abstractmethod
+    def id_model_type(cls):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def default_id(cls):
+        pass
 
     class Config:
         alias_generator = snake_to_camel
