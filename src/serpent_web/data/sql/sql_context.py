@@ -45,7 +45,9 @@ class EngineFactory:
     def _engine_strategy_map(cls):
         return {
             DatabaseType.SQLITE: cls.create_sql_lite_engine,
-            DatabaseType.DATABRICKS: cls.create_sql_engine
+            DatabaseType.DATABRICKS: cls.create_sql_engine,
+            DatabaseType.POSTGRES: cls.create_sql_engine,
+            DatabaseType.AZURESQL: cls.create_sql_engine
         }
 
     # database url not used for sqlite - local development only
