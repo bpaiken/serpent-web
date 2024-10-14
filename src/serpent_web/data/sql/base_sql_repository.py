@@ -5,6 +5,7 @@ from uuid import UUID
 from pyexpat import model
 from sqlalchemy.orm import Session
 
+from serpent_web.data.data_schemas import PaginatedList
 from serpent_web.data.sql.base_sql_model import BaseSqlModel
 
 _logger = logging.getLogger(__name__)
@@ -57,6 +58,51 @@ class BaseSqlRepository(Generic[TModel]):
         query = query.offset(skip).limit(limit)
 
         return query.all()
+
+    def get_paginated(self, query_filter: Dict[str, Any] = None, skip: int = 0, limit: int = 100) -> PaginatedList[
+        TModel]:
+        """
+        Retrieve multiple objects based on query filters, skip, and limit.
+        :param query_filter: Dictionary of key-value pairs for filtering the query
+        :param skip: Number of records to skip
+        :param limit: Maximum number of records to return
+        :return: Paginated response of models
+        """
+        query_filter = query_filter or {}
+        base_query = self._db.query(self.model)
+
+        if query_filter:
+            for key, value in query_filter.items():
+                if hasattr(self.model, key):
+                    base_query = base_query.filter(getattr(self.model, key) == value)
+
+        # Calculate total number of items before pagination
+        total = base_query.count()
+
+        # Apply pagination
+        paginated_query = base_query.offset(skip).limit(limit)
+        data = paginated_query.all()
+
+        # Calculate next_page and previous_page
+        if skip + limit < total:
+            next_page = (skip + limit) // limit + 1
+        else:
+            next_page = None
+
+        if skip > 0:
+            previous_page = max((skip - limit) // limit + 1, 1)
+        else:
+            previous_page = None
+
+        # Construct and return the PaginatedResponse
+        return PaginatedList[TModel](
+            total=total,
+            skip=skip,
+            limit=limit,
+            data=data,
+            next=next_page,
+            previous=previous_page
+        )
 
     def create(self, model: TModel, defer_commit: bool = False) -> TModel:
         """
