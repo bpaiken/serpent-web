@@ -2,6 +2,7 @@ from uuid import UUID
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, List
 
+from serpent_web.data.data_schemas import PaginatedList
 from serpent_web.data.sql.base_sql_repository import BaseSqlRepository
 
 TModel = TypeVar('TModel', bound=object)
@@ -83,3 +84,13 @@ class BaseManager(Generic[TModel], ABC):
         :return: List of models
         """
         return self._repository.get(query_filter=query_filter, skip=skip, limit=limit)
+
+    def get_paginated(self, query_filter: dict[str, any] = None, skip: int = 0, limit: int = 100) -> PaginatedList[TModel]:
+        """
+        Retrieve multiple objects based on query filters, skip, and limit.
+        :param query_filter: Dictionary of key-value pairs for filtering the query
+        :param skip: Number of records to skip
+        :param limit: Maximum number of records to return
+        :return: List of models
+        """
+        return self._repository.get_paginated(query_filter=query_filter, skip=skip, limit=limit)
