@@ -2,9 +2,7 @@ from typing import TypeVar, Generic, Optional
 
 from pydantic import BaseModel
 
-from serpent_web.data.sql.base_sql_model import BaseSqlModel
-
-TModel = TypeVar('TModel', bound=BaseSqlModel)
+TModel = TypeVar('TModel')
 
 
 class PaginatedList(BaseModel, Generic[TModel]):
