@@ -85,13 +85,30 @@ class BaseManager(Generic[TModel], ABC):
         """
         return self._repository.get(query_filter=query_filter, skip=skip, limit=limit)
 
-    def get_paginated(self, query_filter: dict[str, any] = None, skip: int = 0, limit: int = 100, order_by: list[str] = None) -> PaginatedList[TModel]:
+    def get_paginated(
+            self,
+            query_filter: dict[str, any] = None,
+            skip: int = None,
+            limit: int = None,
+            order_by: list[str] = None,
+            search_fields: list[str] = None,
+            search_text: str = None
+    ) -> PaginatedList[TModel]:
         """
         Retrieve multiple objects based on query filters, skip, and limit.
         :param query_filter: Dictionary of key-value pairs for filtering the query
         :param skip: Number of records to skip
         :param limit: Maximum number of records to return
         :param order_by: List of field names to order by. Use '-' prefix for descending order.
+        :param search_fields: List of string or text field names to search
+        :param search_text: Text to search for in the specified fields
         :return: List of models
         """
-        return self._repository.get_paginated(query_filter=query_filter, skip=skip, limit=limit, order_by=order_by)
+        return self._repository.get_paginated(
+            query_filter=query_filter,
+            skip=skip,
+            limit=limit,
+            order_by=order_by,
+            search_fields=search_fields,
+            search_text=search_text
+        )

@@ -3,6 +3,8 @@ from typing import TypeVar, Generic, Type, List, Dict, Any, get_args
 from uuid import UUID
 
 from pyexpat import model
+
+from sqlalchemy import String, Text, or_
 from sqlalchemy.orm import Session
 
 from serpent_web.data.data_schemas import PaginatedList
@@ -62,16 +64,20 @@ class BaseSqlRepository(Generic[TModel]):
     def get_paginated(
             self,
             query_filter: Dict[str, Any] = None,
-            skip: int = 0,
-            limit: int = 100,
-            order_by: List[str] = None
+            skip: int = None,
+            limit: int = None,
+            order_by: List[str] = None,
+            search_fields: List[str] = None,
+            search_text: str = None
     ) -> PaginatedList[TModel]:
         """
-        Retrieve multiple objects based on query filters, skip, limit, and order.
+        Retrieve multiple objects based on query filters, skip, limit, order, and search.
         :param query_filter: Dictionary of key-value pairs for filtering the query
-        :param skip: Number of records to skip
-        :param limit: Maximum number of records to return
+        :param skip: Number of records to skip (optional)
+        :param limit: Maximum number of records to return (optional)
         :param order_by: List of field names to order by. Use '-' prefix for descending order.
+        :param search_fields: List of string or text field names to search
+        :param search_text: Text to search for in the specified fields
         :return: Paginated response of models
         """
         query_filter = query_filter or {}
@@ -82,6 +88,22 @@ class BaseSqlRepository(Generic[TModel]):
             for key, value in query_filter.items():
                 if hasattr(self.model, key):
                     base_query = base_query.filter(getattr(self.model, key) == value)
+
+        # Apply search filters
+        if search_text and search_fields:
+            search_conditions = []
+            for field_name in search_fields:
+                if hasattr(self.model, field_name):
+                    column = getattr(self.model, field_name)
+                    # Get the column type
+                    column_type = self.model.__table__.columns[field_name].type
+                    if not isinstance(column_type, (String, Text)):
+                        raise TypeError(f"Field '{field_name}' is not a string or text column")
+                    search_conditions.append(column.ilike(f"%{search_text}%"))
+                else:
+                    raise AttributeError(f"'{self.model.__name__}' has no attribute '{field_name}'")
+            if search_conditions:
+                base_query = base_query.filter(or_(*search_conditions))
 
         # Apply sorting if order_by is provided
         if order_by:
@@ -105,26 +127,35 @@ class BaseSqlRepository(Generic[TModel]):
         # Calculate total number of items before pagination
         total = base_query.count()
 
-        # Apply pagination
-        paginated_query = base_query.offset(skip).limit(limit)
-        data = paginated_query.all()
+        # Apply pagination if skip or limit is provided
+        if skip is not None:
+            base_query = base_query.offset(skip)
+        if limit is not None:
+            base_query = base_query.limit(limit)
+
+        data = base_query.all()
 
         # Calculate next_page and previous_page
-        if skip + limit < total:
-            next_page = (skip + limit) // limit + 1
+        if limit is not None:
+            if skip is None:
+                skip = 0
+            if skip + limit < total:
+                next_page = (skip + limit) // limit + 1
+            else:
+                next_page = None
+            if skip > 0:
+                previous_page = max((skip - limit) // limit + 1, 1)
+            else:
+                previous_page = None
         else:
             next_page = None
-
-        if skip > 0:
-            previous_page = max((skip - limit) // limit + 1, 1)
-        else:
             previous_page = None
 
         # Construct and return the PaginatedResponse
         return PaginatedList[TModel](
             total=total,
-            skip=skip,
-            limit=limit,
+            skip=skip if skip is not None else 0,
+            limit=limit if limit is not None else total,
             data=data,
             next=next_page,
             previous=previous_page
