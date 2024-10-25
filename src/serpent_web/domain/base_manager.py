@@ -85,6 +85,14 @@ class BaseManager(Generic[TModel], ABC):
         """
         return self._repository.get(query_filter=query_filter, skip=skip, limit=limit)
 
+    def get_models_by_ids(self, ids: List[any]) -> List[TModel]:
+        """
+        Retrieve multiple objects based on a list of primary keys.
+        :param ids: List of primary keys
+        :return: List of models
+        """
+        return self._repository.get_models_by_ids(ids)
+
     def get_paginated(
             self,
             query_filter: dict[str, any] = None,

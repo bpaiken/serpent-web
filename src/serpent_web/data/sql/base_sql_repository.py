@@ -42,6 +42,14 @@ class BaseSqlRepository(Generic[TModel]):
         """
         return self._db.query(self.model).get(id)
 
+    def get_models_by_ids(self, ids: list[any]) -> list[TModel]:
+        """
+        Retrieve multiple objects as specified by their primary keys.
+        :param ids: a list of the model's primary keys (e.g., 'id')
+        :return: a list of the models
+        """
+        return self._db.query(self.model).filter(self.model.id.in_(ids)).all()
+
     def get(self, query_filter: Dict[str, Any] = None, skip: int = 0, limit: int = 100) -> List[TModel]:
         """
         Retrieve multiple objects based on query filters, skip, and limit.
