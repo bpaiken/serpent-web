@@ -5,7 +5,7 @@ from uuid import UUID
 from pyexpat import model
 
 from sqlalchemy import String, Text, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, RelationshipProperty
 
 from serpent_web.data.data_schemas import PaginatedList
 from serpent_web.data.sql.base_sql_model import BaseSqlModel
@@ -100,16 +100,22 @@ class BaseSqlRepository(Generic[TModel]):
         # Apply search filters
         if search_text and search_fields:
             search_conditions = []
+            joins_applied = set()
             for field_name in search_fields:
-                if hasattr(self.model, field_name):
-                    column = getattr(self.model, field_name)
-                    # Get the column type
-                    column_type = self.model.__table__.columns[field_name].type
-                    if not isinstance(column_type, (String, Text)):
-                        raise TypeError(f"Field '{field_name}' is not a string or text column")
-                    search_conditions.append(column.ilike(f"%{search_text}%"))
-                else:
-                    raise AttributeError(f"'{self.model.__name__}' has no attribute '{field_name}'")
+                column, joins = self._get_column_and_joins(self.model, field_name)
+
+                # Check if the column is of string or text type
+                if not isinstance(column.type, (String, Text)):
+                    raise TypeError(f"Field '{field_name}' is not a string or text column")
+
+                search_conditions.append(column.ilike(f"%{search_text}%"))
+
+                # Apply joins to the query
+                for join in joins:
+                    if join not in joins_applied:
+                        base_query = base_query.join(join)
+                        joins_applied.add(join)
+
             if search_conditions:
                 base_query = base_query.filter(or_(*search_conditions))
 
@@ -219,3 +225,25 @@ class BaseSqlRepository(Generic[TModel]):
         else:
             self._db.commit()
             self._db.refresh(model)
+
+    def _get_column_and_joins(self, model, field_name):
+        parts = field_name.split('.')
+        current_model = model
+        joins = []
+        column = None
+        for part in parts:
+            if hasattr(current_model, part):
+                attr = getattr(current_model, part)
+                prop = getattr(attr, 'property', None)
+                if isinstance(prop, RelationshipProperty):
+                    # It's a relationship
+                    current_model = prop.mapper.class_
+                    joins.append(attr)
+                else:
+                    # It's a column
+                    column = attr
+            else:
+                raise AttributeError(f"'{current_model.__name__}' has no attribute '{part}'")
+        if column is None:
+            raise AttributeError(f"Field '{field_name}' does not correspond to a valid column")
+        return column, joins
