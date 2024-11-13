@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 from abc import ABCMeta
 from typing import TypeVar, Generic
 
-from sqlalchemy import Column, DateTime, event
+from sqlalchemy import Column, event
 from sqlalchemy.orm import declared_attr, as_declarative, DeclarativeMeta, Mapped
+from sqlalchemy.types import TIMESTAMP
 
 from serpent_web.core.util.datetime_helpers import utc_now_time_aware
 from serpent_web.core.util.string_helpers import snake_to_camel, title_to_snake
@@ -25,8 +26,8 @@ class BaseSqlModel(Generic[TId], ABC):
     def id(cls) -> Mapped[TId]:
         return Column(cls.id_model_type(), primary_key=True, default=cls.default_id())
 
-    created_on = Column(DateTime, default=utc_now_time_aware)
-    updated_on = Column(DateTime, default=utc_now_time_aware, onupdate=utc_now_time_aware)
+    created_on = Column(TIMESTAMP(timezone=True), default=utc_now_time_aware)
+    updated_on = Column(TIMESTAMP(timezone=True), default=utc_now_time_aware, onupdate=utc_now_time_aware)
 
     @property
     def pk(self):  # alias
