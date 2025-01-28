@@ -120,21 +120,24 @@ class BaseSqlRepository(Generic[TModel]):
                 base_query = base_query.filter(or_(*search_conditions))
 
         # Apply sorting if order_by is provided
+        # Apply sorting if order_by is provided
         if order_by:
             order_criteria = []
+            joins_applied = set()
             for field_name in order_by:
                 descending = False
                 if field_name.startswith('-'):
                     descending = True
                     field_name = field_name[1:]
-                if hasattr(self.model, field_name):
-                    field = getattr(self.model, field_name)
-                    if descending:
-                        order_criteria.append(field.desc())
-                    else:
-                        order_criteria.append(field.asc())
+                column, joins = self._get_column_and_joins(self.model, field_name)
+                for join in joins:
+                    if join not in joins_applied:
+                        base_query = base_query.join(join)
+                        joins_applied.add(join)
+                if descending:
+                    order_criteria.append(column.desc())
                 else:
-                    raise AttributeError(f"'{self.model.__name__}' has no attribute '{field_name}'")
+                    order_criteria.append(column.asc())
             if order_criteria:
                 base_query = base_query.order_by(*order_criteria)
 
