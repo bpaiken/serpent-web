@@ -1,6 +1,6 @@
 [project]
 name = "serpent-web"
-version = "0.2.1"
+version = "0.3.0"
 description = "Core, Data, and Utility libraries for api development"
 homepage = "https://github.com/bpaiken/serpent-web"
 authors = [
