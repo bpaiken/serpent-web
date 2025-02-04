@@ -165,7 +165,7 @@ class BaseSqlRepository(Generic[TModel]):
             stmt = stmt.limit(limit)
 
         result = self._db.execute(stmt)
-        data = result.scalars().all()
+        data = result.unique().scalars().all()
 
         next_page, previous_page = self._calculate_pagination(total, skip, limit)
         return PaginatedList[TModel](
@@ -206,7 +206,7 @@ class BaseSqlRepository(Generic[TModel]):
             stmt = stmt.limit(limit)
 
         result = await self._db.execute(stmt)
-        data = result.scalars().all()
+        data = result.unique().scalars().all()
 
         next_page, previous_page = self._calculate_pagination(total, skip, limit)
         return PaginatedList[TModel](
