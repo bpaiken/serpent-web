@@ -3,6 +3,7 @@ from abc import ABCMeta
 from typing import TypeVar, Generic
 
 from sqlalchemy import Column, event
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import declared_attr, as_declarative, DeclarativeMeta, Mapped
 from sqlalchemy.types import TIMESTAMP
 
@@ -51,7 +52,12 @@ class BaseSqlModel(Generic[TId], ABC):
         alias_generator = snake_to_camel
 
 
+class BaseSqlModelAsync(BaseSqlModel[TId], AsyncAttrs, ABC):
+    __abstract__ = True
+
+
 # Event listener to update `updated_on` before update
 @event.listens_for(BaseSqlModel, 'before_update', propagate=True)
 def update_timestamp(mapper, connection, target):
     target.updated_on = utc_now_time_aware()
+

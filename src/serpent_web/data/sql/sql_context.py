@@ -157,7 +157,7 @@ class EngineFactory:
         return session
 
 
-def get_session(
+def get_session_maker(
     database_type: DatabaseType, database_url: str, database_name: str = None, **kwargs
 ):
     """
@@ -167,7 +167,7 @@ def get_session(
         database_type=database_type, database_url=database_url, database_name=database_name, **kwargs
     )
 
-def get_async_session(database_type: DatabaseType, database_url: str, database_name: str = None, **kwargs):
+def get_async_session_maker(database_type: DatabaseType, database_url: str, database_name: str = None, **kwargs):
     """
     Returns an asynchronous session.
     """
@@ -177,8 +177,8 @@ def get_async_session(database_type: DatabaseType, database_url: str, database_n
 
 def db_dependency(
         database_type: DatabaseType, database_url: str, database_name: str = None, **kwargs
-) -> Generator[Session]:
-    session = get_session(database_type=database_type, database_url=database_url, database_name=database_name, **kwargs)
+) -> Generator[Session, None, None]:
+    session = get_session_maker(database_type=database_type, database_url=database_url, database_name=database_name, **kwargs)
 
     with session() as session:
         try:
@@ -199,7 +199,7 @@ async def async_db_dependency(
     An async dependency generator that yields an AsyncSession.
     (For example, to be used with FastAPI's dependency injection.)
     """
-    async_session_local = get_async_session(
+    async_session_local = get_async_session_maker(
         database_type=database_type, database_url=database_url, database_name=database_name, **kwargs
     )
 
