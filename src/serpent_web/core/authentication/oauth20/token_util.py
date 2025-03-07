@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from cachetools import TTLCache, cached
 import requests
@@ -42,7 +43,7 @@ def get_public_key(token, jwks_url):
         raise HTTPException(status_code=500, detail="Error processing token.") from e
 
 
-def verify_token(token, jwks_url: str, audience: str):
+def verify_token(token, jwks_url: str, audience: str) -> dict[str, Any]:
     """Verify the JWT token."""
     if not token:
         raise HTTPException(status_code=403, detail="Access Token is missing")
@@ -72,8 +73,11 @@ def get_claim_from_payload(payload: dict, claim_json_path: str) -> str | None:
     :return: The extracted claim value.
     """
     jsonpath_expression = parse(claim_json_path)
-
     matches = jsonpath_expression.find(payload)
+
+    if not matches:
+        return None
+
     return matches[0].value
 
 

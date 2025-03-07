@@ -7,6 +7,8 @@ authors = [
     {name = "Brian Aiken", email = "bpaiken570@gmail.com"},
 ]
 
+[tool.pdm.scripts]
+test = "pytest"
 
 dependencies = [
     "cachetools>=5.4.0",
@@ -23,10 +25,14 @@ requires-python = ">=3.10, <3.12"
 readme = "README.md"
 license = {text = "MIT"}
 
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=8.3.4",
+]
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
-
 
 [tool.pdm]
 distribution = true
